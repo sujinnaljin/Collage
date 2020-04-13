@@ -27,6 +27,7 @@
 /// THE SOFTWARE.
 
 import UIKit
+import Combine
 
 class MainViewController: UIViewController {
   
@@ -42,7 +43,11 @@ class MainViewController: UIViewController {
   @IBOutlet weak var itemAdd: UIBarButtonItem!
 
   // MARK: - Private properties
-  
+    //현재 뷰컨과 라이프 사이클 함께하기 때문에 navigation stack 에서 없어지면 모든 UI subscription들도 취소 될 것.
+    private var subscriptions = Set<AnyCancellable>()
+    //데이터와 UI control을 바인딩할때는 대개 PassthroughSubject보다 CurrentValueSubject가 낫다.
+    //적어도 하나의 값을 보장하기 때문에 UI가 정의되지 않은 상태로 있는 것을 방지하기 때문.
+    private let images = CurrentValueSubject<[UIImage], Never>([])
 
   // MARK: - View controller
   
@@ -50,7 +55,29 @@ class MainViewController: UIViewController {
     super.viewDidLoad()
     let collageSize = imagePreview.frame.size
     
+    images
+        //UI update나 logging 등 사이드 이펙트 수행하고 싶을때
+        .handleEvents(receiveOutput: { [weak self] photos in
+            //업데이트 하고 싶은 UI마다 subscription 바인딩 하면 overkill 일 수 있다.
+            //따라서 메인이 되는 것을 assign으로 subscription 생성하되, 나머지 좀좀따리는 handleEvent에서 처리
+            self?.updateUI(photos: photos)
+        })
+        .map{ photos in
+            UIImage.collage(images: photos, size: collageSize)
+        }
+        .assign(to: \.image, on: imagePreview)
+        .store(in: &subscriptions)
+    
+    
+    //🤔이런식으로 해도 성능은 같지만 위에 것이 더 보기 좋아서 그런가..?
+    /*images
+        .sink { [weak self] (photos) in
+            self?.updateUI(photos: photos)
+            self?.imagePreview.image = UIImage.collage(images: photos, size: collageSize)
+        }
+        .store(in: &subscriptions)*/
   }
+
   
   private func updateUI(photos: [UIImage]) {
     buttonSave.isEnabled = photos.count > 0 && photos.count % 2 == 0
@@ -62,7 +89,7 @@ class MainViewController: UIViewController {
   // MARK: - Actions
   
   @IBAction func actionClear() {
-    
+    images.send([])
   }
   
   @IBAction func actionSave() {
@@ -71,7 +98,8 @@ class MainViewController: UIViewController {
   }
   
   @IBAction func actionAdd() {
-    
+    let newImages = images.value + [UIImage(named: "IMG_1907.jpg")!]
+    images.send(newImages)
   }
   
   private func showMessage(_ title: String, description: String? = nil) {
