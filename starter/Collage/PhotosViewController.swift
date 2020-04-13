@@ -28,13 +28,19 @@
 
 import UIKit
 import Photos
+import Combine
 
 class PhotosViewController: UICollectionViewController {
   
   // MARK: - Public properties
-  
+    //read-only publisher로 만듦. AnyPublisher는 send 불가능하니까 
+    var selectedPhotos: AnyPublisher<UIImage, Never> {
+        return selectedPhotosSubject.eraseToAnyPublisher()
+    }
   
   // MARK: - Private properties
+    //private 통해 여기서만 발행하게
+    private let selectedPhotosSubject = PassthroughSubject<UIImage, Never>()
     
   private lazy var photos = PhotosViewController.loadPhotos()
   private lazy var imageManager = PHCachingImageManager()
@@ -64,6 +70,8 @@ class PhotosViewController: UICollectionViewController {
   
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    //해당 subject를 다른 type에 드러내고 있으니까, 뷰 컨트롤러가 해제되는 경우에 외부 구독을 제거하기 위해 완료 이벤트를 명시적으로 보냄
+    selectedPhotosSubject.send(completion: .finished)
   }
     
   // MARK: - UICollectionViewDataSource
@@ -107,6 +115,7 @@ class PhotosViewController: UICollectionViewController {
       }
       
       // Send the selected photo
+        self.selectedPhotosSubject.send(image)
       
     })
   }

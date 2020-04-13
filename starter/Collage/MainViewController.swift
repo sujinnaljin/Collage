@@ -98,8 +98,31 @@ class MainViewController: UIViewController {
   }
   
   @IBAction func actionAdd() {
-    let newImages = images.value + [UIImage(named: "IMG_1907.jpg")!]
-    images.send(newImages)
+//    let newImages = images.value + [UIImage(named: "IMG_1907.jpg")!]
+//    images.send(newImages)
+    let photos = storyboard!.instantiateViewController(
+      withIdentifier: "PhotosViewController") as! PhotosViewController
+    
+    //read only publisher. 여기서는 발행 불가능.
+    let newPhotos = photos.selectedPhotos
+
+    newPhotos
+      .map { [unowned self] newImage in
+        return self.images.value + [newImage]
+      }
+      .assign(to: \.value, on: images) //value 에 새 값이 할당되면 send하니까
+      .store(in: &subscriptions) //이 subscription은 preseted된 뷰컨이 사라지자마자 끝날 것 (completion 보냈으니까)
+    
+    //🤔이런식으로 해도 성능은 같지만 위에 것이 더 보기 좋아서 그런가..?
+    /*newPhotos
+        .sink{ [unowned self] newImage in
+            self.images.value += [newImage]
+    }
+    .store(in: &subscriptions)*/
+        
+        
+
+    navigationController!.pushViewController(photos, animated: true)
   }
   
   private func showMessage(_ title: String, description: String? = nil) {
