@@ -30,5 +30,23 @@ import UIKit
 import Combine
 
 extension UIViewController {
-  
+    //값을 return 하는 것엔 관심 없고 유저가 Close 를 탭할때 완료하는 것만 관심
+    //🤔근데 이게 기존 코드보다 더 나은지는 잘 모르겠다
+  func alert(title: String, text: String?) -> AnyPublisher<Void, Never> {
+    let alertVC = UIAlertController(title: title,
+                                    message: text,
+                                    preferredStyle: .alert)
+    return Future { (resolve) in
+        alertVC.addAction(UIAlertAction(title: "Close", style: .default, handler: { (_) in
+            resolve(.success(()))
+        }))
+        self.present(alertVC, animated: true, completion: nil)
+    }
+    .handleEvents(receiveCancel : {
+        //subscription이 취소될때 해당 alert를 자동으로 dismiss 시킴
+        self.dismiss(animated: true)
+    })
+    .eraseToAnyPublisher()
+    
+    }
 }
