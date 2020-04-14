@@ -114,6 +114,12 @@ class MainViewController: UIViewController {
     let photos = storyboard!.instantiateViewController(
       withIdentifier: "PhotosViewController") as! PhotosViewController
     
+    photos.$selectedPhotosCount
+        .filter{$0 > 0}
+        .map { "Selected \($0) photos" }
+        .assign(to: \.title, on: self)
+        .store(in: &subscriptions)
+    
     //read only publisher. 여기서는 발행 불가능.
     //같은 publisher에 대해 여러개 구독할때 share() 연산자 통해서 원래 publisher을 공유해야함. 이는 publisher을 class로 wrap 해서 다수의 subscriber에게 안전하게 방출.
     //주의해야할 점은 share()은 공유된 subscription으로 부터 나온 값을 재방출하지 않는다는 점이다.
