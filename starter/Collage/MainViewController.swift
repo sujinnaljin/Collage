@@ -124,7 +124,11 @@ class MainViewController: UIViewController {
     //같은 publisher에 대해 여러개 구독할때 share() 연산자 통해서 원래 publisher을 공유해야함. 이는 publisher을 class로 wrap 해서 다수의 subscriber에게 안전하게 방출.
     //주의해야할 점은 share()은 공유된 subscription으로 부터 나온 값을 재방출하지 않는다는 점이다.
     //이에 대한 해결책은 새로운 subscriber가 구독할때 예전 값을 재방출하거나 replay하는 나만의 공유 operator를 만드는 것이다.
-    let newPhotos = photos.selectedPhotos.share()
+    let newPhotos = photos.selectedPhotos
+        .prefix(while: { [unowned self] _  in
+            return self.images.value.count < 6
+        })
+        .share()
 
     newPhotos
       .map { [unowned self] newImage in
@@ -139,6 +143,14 @@ class MainViewController: UIViewController {
             self.images.value += [newImage]
     }
     .store(in: &subscriptions)*/
+    
+    newPhotos
+        .ignoreOutput()
+        .delay(for: 2.0, scheduler: DispatchQueue.main)
+        .sink(receiveCompletion: { [unowned self] _ in
+            self.updateUI(photos: self.images.value)
+        }) { (_) in }
+        .store(in: &subscriptions)
         
         
 
