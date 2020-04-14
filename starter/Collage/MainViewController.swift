@@ -125,10 +125,25 @@ class MainViewController: UIViewController {
     //주의해야할 점은 share()은 공유된 subscription으로 부터 나온 값을 재방출하지 않는다는 점이다.
     //이에 대한 해결책은 새로운 subscriber가 구독할때 예전 값을 재방출하거나 replay하는 나만의 공유 operator를 만드는 것이다.
     let newPhotos = photos.selectedPhotos
+        .filter({ (image) -> Bool in
+            return image.size.height < image.size.width
+        })
         .prefix(while: { [unowned self] _  in
             return self.images.value.count < 6
         })
         .share()
+    
+    newPhotos
+          .filter { [unowned self] _ in
+              self.images.value.count == 5
+      }
+      .flatMap { [unowned self] _ in
+          self.alert(title: "Limit reached", text: "Buy Pro")
+      }
+      .sink { [unowned self] (_) in
+        self.navigationController?.popViewController(animated: true)
+      }
+      .store(in: &subscriptions)
 
     newPhotos
       .map { [unowned self] newImage in
@@ -151,7 +166,6 @@ class MainViewController: UIViewController {
             self.updateUI(photos: self.images.value)
         }) { (_) in }
         .store(in: &subscriptions)
-        
         
 
     navigationController!.pushViewController(photos, animated: true)
