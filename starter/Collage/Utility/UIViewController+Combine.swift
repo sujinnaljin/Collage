@@ -31,7 +31,7 @@ import Combine
 
 extension UIViewController {
     //값을 return 하는 것엔 관심 없고 유저가 Close 를 탭할때 완료하는 것만 관심
-    //🤔근데 이게 기존 코드보다 더 나은지는 잘 모르겠다
+    //🤔근데 이게 기존 코드보다 더 나은지는 잘 모르겠다. 흠.. 핸들러에서 역할이 단순히 dismiss 하는게 아니라 상황에 따라 다양해진다면 유용할거 같기도하고..
   func alert(title: String, text: String?) -> AnyPublisher<Void, Never> {
     let alertVC = UIAlertController(title: title,
                                     message: text,
@@ -42,6 +42,7 @@ extension UIViewController {
         }))
         self.present(alertVC, animated: true, completion: nil)
     }
+    //alert subscription 과 현재 나타나는 뷰컨과 연결시키고, 해당 컨트롤러가 dismiss됐을때를 처리한다.
     .handleEvents(receiveCancel : {
         //subscription이 취소될때 해당 alert를 자동으로 dismiss 시킴
         self.dismiss(animated: true)

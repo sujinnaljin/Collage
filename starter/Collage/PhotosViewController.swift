@@ -43,6 +43,7 @@ class PhotosViewController: UICollectionViewController {
   // MARK: - Private properties
     //private 통해 여기서만 발행하게
     private let selectedPhotosSubject = PassthroughSubject<UIImage, Never>()
+    private var subscriptions = Set<AnyCancellable>()
     
   private lazy var photos = PhotosViewController.loadPhotos()
   private lazy var imageManager = PHCachingImageManager()
@@ -59,16 +60,31 @@ class PhotosViewController: UICollectionViewController {
     super.viewDidLoad()
     
     // Check for Photos access authorization and reload the list if authorized.
-    PHPhotoLibrary.fetchAuthorizationStatus { [weak self] status in
-      if status {
-        self?.photos = PhotosViewController.loadPhotos()
-        
-        DispatchQueue.main.async {
-          self?.collectionView.reloadData()
+    PHPhotoLibrary.isAuthorized
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] (isAuth) in
+            if isAuth {
+                self?.photos = PhotosViewController.loadPhotos()
+                self?.collectionView.reloadData()
+            } else {
+                self?.showErrorMessage()
+            }
         }
-      }
-    }
+       .store(in: &subscriptions)
   }
+    
+    //답안?에서는 receiveCompletion 쪽에 pop을 작성했다.
+    //Future은 값을 하나 방출하고 완료하거나, 실패하는 publisher이다.
+    
+    func showErrorMessage() {
+        alert(title: "Cannot Access", text: "Please set auth")
+           .sink(receiveValue: { [weak self] _ in
+                self?.dismiss(animated: true, completion: nil) //alert 창 위한 것
+                self?.navigationController?.popViewController(animated: true)
+                })
+            .store(in: &subscriptions)
+ 
+    }
   
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
