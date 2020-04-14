@@ -43,6 +43,7 @@ extension UIViewController {
         self.present(alertVC, animated: true, completion: nil)
     }
     //alert subscription 과 현재 나타나는 뷰컨과 연결시키고, 해당 컨트롤러가 dismiss됐을때를 처리한다.
+    //❓도대체 여기 트리거 어떻게 시켜야함?? 다운 스트림 리시버가 publishing cancel할때 시행된다는데.. 이거 담고 있는 뷰컨 deinit 되면 자동으로 cancel call 되어고 여기 시행되어야하는거 아님..? ????????????????????????????//
     .handleEvents(receiveCancel : {
         //subscription이 취소될때 해당 alert를 자동으로 dismiss 시킴
         self.dismiss(animated: true)

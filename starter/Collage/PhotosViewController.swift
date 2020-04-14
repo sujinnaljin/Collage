@@ -78,6 +78,7 @@ class PhotosViewController: UICollectionViewController {
     
     func showErrorMessage() {
         alert(title: "Cannot Access", text: "Please set auth")
+        //❓답안?에서 보면 recieveCompletion에서 처리하던데.. 왜..? value 다음에 바로 finish 오는 경우 말고 fail 처리할 경우가 있나..?
            .sink(receiveValue: { [weak self] _ in
                 self?.dismiss(animated: true, completion: nil) //alert 창 위한 것
                 self?.navigationController?.popViewController(animated: true)
