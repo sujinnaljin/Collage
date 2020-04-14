@@ -37,5 +37,30 @@ class PhotoWriter {
     case couldNotSavePhoto
     case generic(Swift.Error)
   }
+    
+    //future는 publisher의 한 종류. 다른 타입이 결과를 섭스크라이브 할 수 있게함.
+    //이 API의 consumer가 구독하게 될 것.
+    static func save(_ image: UIImage) -> Future<String, PhotoWriter.Error> {
+        return Future { resolve in
+            do {
+                //sync하게 포토 라이브러리 접근.
+                //Future의 clousre 자체는 async하게 동작하므로 main 스레드에서의 블라킹은 걱정 할 필요 없음.
+                try PHPhotoLibrary.shared().performChangesAndWait {
+                    // 1. 이미지 저장을 위한 요청
+                    let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                    
+                    // 2. 새롭게 생성된 asset의 id 요청
+                    guard let savedAssetID =
+                        request.placeholderForCreatedAsset?.localIdentifier else {
+                            return resolve(.failure(.couldNotSavePhoto))
+                    }
+                    resolve(.success(savedAssetID))
+                }
+            } catch {
+                resolve(.failure(.generic(error)))
+            }
+        }
+    }
+
   
 }

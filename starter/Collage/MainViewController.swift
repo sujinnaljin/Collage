@@ -94,6 +94,17 @@ class MainViewController: UIViewController {
   
   @IBAction func actionSave() {
     guard let image = imagePreview.image else { return }
+    PhotoWriter.save(image)
+        .sink(receiveCompletion: { [unowned self] (completion) in
+            //if case 패턴 매칭
+            if case .failure(let error) = completion {
+                self.showMessage("Error", description: error.localizedDescription)
+            }
+            self.actionClear()
+        }) { [unowned self] (id) in
+            self.showMessage("Saved id with \(id)")
+    }
+    .store(in: &subscriptions)
     
   }
   
